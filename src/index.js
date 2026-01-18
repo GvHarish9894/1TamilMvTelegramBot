@@ -3,6 +3,7 @@
  * Orchestrates all components and manages the bot lifecycle
  */
 
+import express from 'express';
 import config from '../config/config.js';
 import logger from './utils/logger.js';
 import Database from './storage/database.js';
@@ -135,8 +136,44 @@ async function start() {
     // Initialize components
     await initialize();
 
-    // Start the Telegram bot
-    await telegramBot.start();
+    // Determine if we should use webhooks (production) or polling (local)
+    const useWebhook = !!config.server?.webhookUrl;
+
+    if (useWebhook) {
+      logger.info('Starting in webhook mode (production)');
+
+      // Create Express app
+      const app = express();
+      app.use(express.json());
+
+      // Health check endpoint
+      app.get('/health', (req, res) => {
+        res.status(200).json({
+          status: 'ok',
+          uptime: process.uptime(),
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      // Start webhook
+      await telegramBot.startWebhook(app, config.server.webhookPath);
+
+      // Set webhook URL with Telegram
+      const webhookUrl = config.server.webhookUrl + config.server.webhookPath;
+      await telegramBot.setWebhook(webhookUrl);
+
+      // Start Express server
+      const server = app.listen(config.server.port, () => {
+        logger.success(`🌐 HTTP server running on port ${config.server.port}`);
+        logger.success(`📞 Webhook endpoint: ${config.server.webhookPath}`);
+      });
+
+      // Store server for shutdown
+      global.httpServer = server;
+    } else {
+      logger.info('Starting in polling mode (local development)');
+      await telegramBot.start();
+    }
 
     // Start the scheduler
     scheduler.start(checkAndSendUpdates);
@@ -170,6 +207,13 @@ async function shutdown() {
     // Stop bot
     if (telegramBot) {
       await telegramBot.stop();
+    }
+
+    // Close HTTP server if running
+    if (global.httpServer) {
+      global.httpServer.close(() => {
+        logger.info('HTTP server closed');
+      });
     }
 
     // Close browser

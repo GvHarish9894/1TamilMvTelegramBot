@@ -44,7 +44,7 @@ class TelegramBot {
   }
 
   /**
-   * Start the bot
+   * Start the bot in long polling mode (local development)
    */
   async start() {
     if (this.isRunning) {
@@ -53,7 +53,7 @@ class TelegramBot {
     }
 
     try {
-      logger.info('Starting bot...');
+      logger.info('Starting bot in polling mode...');
       this.bot.start({
         onStart: (botInfo) => {
           logger.success(`Bot started: @${botInfo.username}`);
@@ -62,6 +62,47 @@ class TelegramBot {
       });
     } catch (error) {
       logger.error('Failed to start bot:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Start the bot in webhook mode (production)
+   */
+  async startWebhook(app, path) {
+    if (this.isRunning) {
+      logger.warn('Bot is already running');
+      return;
+    }
+
+    try {
+      logger.info('Starting bot in webhook mode...');
+
+      // Set up webhook endpoint
+      app.use(this.bot.webhookCallback(path));
+
+      this.isRunning = true;
+      logger.success('Bot webhook configured');
+    } catch (error) {
+      logger.error('Failed to configure webhook:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Set the webhook URL with Telegram
+   */
+  async setWebhook(webhookUrl) {
+    try {
+      logger.info(`Setting webhook URL: ${webhookUrl}`);
+      await this.bot.api.setWebhook(webhookUrl);
+
+      const webhookInfo = await this.bot.api.getWebhookInfo();
+      logger.success(`Webhook set successfully: ${webhookInfo.url}`);
+
+      return webhookInfo;
+    } catch (error) {
+      logger.error('Failed to set webhook:', error.message);
       throw error;
     }
   }

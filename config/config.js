@@ -52,6 +52,13 @@ const config = {
     chatId: getEnv('TELEGRAM_CHAT_ID', '', true)
   },
 
+  // Server configuration for webhooks
+  server: {
+    port: parseInt(process.env.PORT, 10) || 3000,
+    webhookUrl: process.env.WEBHOOK_URL || '',
+    webhookPath: '/webhook'
+  },
+
   // Scraper Configuration
   scraper: {
     targetUrl: getEnv('TARGET_URL', 'https://www.1tamilmv.haus/'),
