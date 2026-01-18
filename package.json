@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "postinstall": "node node_modules/puppeteer/install.mjs"
+    "postinstall": "PUPPETEER_CACHE_DIR=./chrome-cache node node_modules/puppeteer/install.mjs"
   },
   "keywords": [
     "telegram",

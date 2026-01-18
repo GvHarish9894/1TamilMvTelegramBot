@@ -26,9 +26,13 @@ class BrowserManager {
     try {
       logger.info('Launching browser...');
 
-      // Use Puppeteer's built-in method to find downloaded Chrome
+      // Use custom cache directory for Chrome (persistent on Render)
+      const cacheDir = process.env.PUPPETEER_CACHE_DIR || './chrome-cache';
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ||
-        puppeteer.executablePath();
+        puppeteer.executablePath({ cacheDir });
+
+      logger.debug(`Using Chrome cache directory: ${cacheDir}`);
+      logger.debug(`Chrome executable path: ${executablePath}`);
 
       // Configuration for Puppeteer
       const launchConfig = {
