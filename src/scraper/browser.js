@@ -26,8 +26,13 @@ class BrowserManager {
     try {
       logger.info('Launching browser...');
 
+      // Use Puppeteer's built-in method to find downloaded Chrome
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ||
+        puppeteer.executablePath();
+
       // Configuration for Puppeteer
       const launchConfig = {
+        executablePath,
         headless: 'new',
         args: [
           '--no-sandbox',
