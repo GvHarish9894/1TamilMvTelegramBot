@@ -1,0 +1,26 @@
+{
+  "name": "1tamilmv-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot that monitors 1TamilMV for new Tamil movie releases",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "movies",
+    "scraper",
+    "tamil"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "grammy": "^1.21.1",
+    "puppeteer": "^24.15.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.1"
+  }
+}
