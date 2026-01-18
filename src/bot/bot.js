@@ -2,7 +2,7 @@
  * Grammy bot initialization and message sending
  */
 
-import { Bot } from 'grammy';
+import { Bot, webhookCallback } from 'grammy';
 import { startCommand } from './commands/start.js';
 import { helpCommand } from './commands/help.js';
 import { latestCommand } from './commands/latest.js';
@@ -78,8 +78,9 @@ class TelegramBot {
     try {
       logger.info('Starting bot in webhook mode...');
 
-      // Set up webhook endpoint
-      app.use(this.bot.webhookCallback(path));
+      // Set up webhook endpoint using Grammy's webhookCallback function
+      // Telegram sends POST requests to webhooks
+      app.post(path, webhookCallback(this.bot, 'express'));
 
       this.isRunning = true;
       logger.success('Bot webhook configured');
