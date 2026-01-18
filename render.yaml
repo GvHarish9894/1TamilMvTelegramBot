@@ -1,0 +1,32 @@
+services:
+  - type: worker
+    name: tamilmv-telegram-bot
+    runtime: node
+    plan: free
+    buildCommand: bash render-build.sh
+    startCommand: node src/index.js
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: TARGET_URL
+        value: https://www.1tamilmv.haus/
+      - key: LISTING_URL
+        value: https://www.1tamilmv.haus/
+      - key: MAX_FILMS
+        value: 20
+      - key: SCRAPE_TIMEOUT
+        value: 30000
+      - key: ENABLE_SCHEDULER
+        value: true
+      - key: CRON_SCHEDULE
+        value: "0 */2 * * *"
+      - key: DATA_PATH
+        value: ./data/seen_films.json
+      - key: MAX_TRACKED_FILMS
+        value: 500
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: true
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium-browser

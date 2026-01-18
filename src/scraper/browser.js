@@ -25,7 +25,9 @@ class BrowserManager {
 
     try {
       logger.info('Launching browser...');
-      this.browser = await puppeteer.launch({
+
+      // Configuration for Puppeteer
+      const launchConfig = {
         headless: 'new',
         args: [
           '--no-sandbox',
@@ -35,7 +37,15 @@ class BrowserManager {
           '--disable-gpu',
           '--window-size=1920x1080'
         ]
-      });
+      };
+
+      // Use system Chromium if available (for Render.com and other platforms)
+      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchConfig.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        logger.info(`Using Chromium at: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+      }
+
+      this.browser = await puppeteer.launch(launchConfig);
 
       this.isInitialized = true;
       logger.success('Browser launched successfully');
