@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tamilmv-telegram-bot
+    name: onetamilmvtelegrambot
     runtime: node
     plan: free
     buildCommand: npm install
@@ -11,7 +11,7 @@ services:
       - key: TELEGRAM_CHAT_ID
         sync: false
       - key: WEBHOOK_URL
-        value: https://tamilmv-telegram-bot.onrender.com
+        value: https://onetamilmvtelegrambot.onrender.com
       - key: TARGET_URL
         value: https://www.1tamilmv.haus/
       - key: LISTING_URL
