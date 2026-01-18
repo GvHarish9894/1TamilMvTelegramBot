@@ -11,6 +11,8 @@ A Node.js Telegram bot that monitors [1TamilMV](https://www.1tamilmv.haus/) for 
 - 🚫 **No Duplicates**: Tracks seen films to prevent repeat notifications
 - ⚡ **Manual Trigger**: Use `/latest` command to check immediately
 - 🎯 **Detailed Metadata**: Language, subtitles, codec, audio info
+- 🌐 **Dual Mode**: Webhooks for production (Render), polling for local dev
+- 🚀 **Cloud Ready**: Easy deployment to Render.com free tier
 
 ## Screenshots
 
@@ -55,6 +57,10 @@ cp .env.example .env
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 TELEGRAM_CHAT_ID=your_chat_id_here
 
+# Server Configuration (optional - for webhook mode)
+# WEBHOOK_URL=https://your-app.onrender.com
+# PORT=3000
+
 # Scraper Configuration
 TARGET_URL=https://www.1tamilmv.haus/
 LISTING_URL=https://www.1tamilmv.haus/index.php?/forums/forum/9-tamil-language/
@@ -69,6 +75,8 @@ CRON_SCHEDULE=0 */2 * * *
 DATA_PATH=./data/seen_films.json
 MAX_TRACKED_FILMS=500
 ```
+
+**Note**: Leave `WEBHOOK_URL` empty for local development (uses polling mode). Set it for production deployment (uses webhook mode).
 
 ## Getting Telegram Credentials
 
@@ -90,13 +98,13 @@ To send to a group:
 
 ## Usage
 
-### Start the bot
+### Local Development (Polling Mode)
 ```bash
 npm start
 ```
 
 The bot will:
-1. Initialize and connect to Telegram
+1. Initialize and connect to Telegram in **polling mode** (no WEBHOOK_URL set)
 2. Start monitoring 1TamilMV automatically
 3. Send updates when new films are found
 
@@ -104,6 +112,13 @@ The bot will:
 ```bash
 npm run dev
 ```
+
+### Production Deployment (Webhook Mode)
+When `WEBHOOK_URL` is set, the bot automatically switches to webhook mode:
+- Starts an Express HTTP server
+- Registers webhook with Telegram
+- Provides `/health` endpoint for monitoring
+- Ideal for cloud platforms like Render.com
 
 ## Bot Commands
 
@@ -133,6 +148,59 @@ Set `ENABLE_SCHEDULER=false` to disable automatic checks (manual `/latest` only)
 
 - `DATA_PATH`: Path to JSON file for tracking seen films
 - `MAX_TRACKED_FILMS`: Maximum number of films to keep in database (default: 500)
+
+## Deployment
+
+### Deploy to Render.com (Free Tier)
+
+This bot is configured for easy deployment to Render's free tier using webhooks.
+
+1. **Fork/Push this repository to GitHub**
+
+2. **Create a new Web Service on Render**:
+   - Go to [Render Dashboard](https://dashboard.render.com/)
+   - Click "New" → "Web Service"
+   - Connect your GitHub repository
+   - Render will auto-detect the `render.yaml` configuration
+
+3. **Configure Environment Variables**:
+   - `TELEGRAM_BOT_TOKEN` - Your bot token from @BotFather
+   - `TELEGRAM_CHAT_ID` - Your channel/chat ID
+   - `WEBHOOK_URL` - Set to your Render app URL (e.g., `https://your-app.onrender.com`)
+   - Other variables are pre-configured in `render.yaml`
+
+4. **Deploy**:
+   - Click "Create Web Service"
+   - Render will build and deploy automatically
+   - The bot will start in webhook mode
+
+5. **Verify Deployment**:
+   - Visit `https://your-app.onrender.com/health` - should return `{"status":"ok"}`
+   - Check logs for "Starting in webhook mode (production)"
+   - Test bot commands in Telegram: `/start`, `/help`, `/latest`
+
+**Render Configuration**:
+- Service Type: `Web Service` (not Background Worker)
+- Runtime: Node.js
+- Build Command: `npm install`
+- Start Command: `node src/index.js`
+- Plan: Free tier compatible
+
+**Note**: Render's free tier may spin down after inactivity. The bot will automatically wake up when receiving commands or on scheduled checks.
+
+### Deploy to Other Platforms
+
+The bot supports both polling and webhook modes:
+
+- **Webhook Mode** (recommended for production):
+  - Set `WEBHOOK_URL` environment variable
+  - Requires a publicly accessible HTTPS endpoint
+  - Works on: Render, Heroku, Railway, Fly.io, etc.
+
+- **Polling Mode** (for local/VPS):
+  - Leave `WEBHOOK_URL` empty
+  - Works on any server (local, VPS, cloud VM)
+  - No public URL required
 
 ## Project Structure
 
@@ -168,6 +236,16 @@ Set `ENABLE_SCHEDULER=false` to disable automatic checks (manual `/latest` only)
 
 ## How It Works
 
+### Bot Architecture
+
+The bot operates in two modes:
+- **Polling Mode** (Local Development): Actively polls Telegram for updates
+- **Webhook Mode** (Production): Telegram sends updates to your HTTP endpoint
+
+Mode is automatically selected based on `WEBHOOK_URL` configuration.
+
+### Film Update Workflow
+
 1. **Listing Scan**: The bot scrapes the 1TamilMV forum listing page for the latest 20 film topics
 2. **Duplicate Filter**: Compares found films against the local database to identify new releases
 3. **Detail Scraping**: For each new film, visits the detail page to extract:
@@ -178,6 +256,12 @@ Set `ENABLE_SCHEDULER=false` to disable automatic checks (manual `/latest` only)
    - Download links (magnet + direct)
 4. **Message Sending**: Sends each film as a separate Telegram message with photo and formatted caption
 5. **Database Update**: Marks sent films as seen to prevent duplicates
+
+### Triggering Updates
+
+- **Automatic**: Cron scheduler runs every 2 hours (configurable)
+- **Manual**: Use `/latest` command in Telegram
+- Both use the same workflow function for consistency
 
 ## Error Handling
 
@@ -194,6 +278,7 @@ The bot handles various error scenarios gracefully:
 - [grammy](https://grammy.dev/) - Modern Telegram Bot framework
 - [puppeteer](https://pptr.dev/) - Headless browser for web scraping
 - [node-cron](https://www.npmjs.com/package/node-cron) - Task scheduling
+- [express](https://expressjs.com/) - HTTP server for webhook mode
 - [dotenv](https://www.npmjs.com/package/dotenv) - Environment variable management
 
 ## Troubleshooting
@@ -220,6 +305,24 @@ sudo apt-get install -y libgbm-dev wget ca-certificates fonts-liberation
 # macOS
 # Usually works out of the box
 ```
+
+### Deployment issues (Render)
+
+**409 Conflict Error**:
+- This happens when using polling mode with multiple instances
+- Solution: Ensure `WEBHOOK_URL` is set in environment variables
+- Verify service type is `web` not `worker` in `render.yaml`
+
+**Health check endpoint**:
+- Visit `https://your-app.onrender.com/health`
+- Should return: `{"status":"ok","uptime":...}`
+- If not responding, check logs for startup errors
+
+**Webhook not receiving updates**:
+- Check logs for "Webhook set successfully" message
+- Verify `WEBHOOK_URL` matches your actual Render app URL
+- Ensure bot has internet access to connect to Telegram
+- Try sending `/start` command to trigger connection
 
 ## Development
 
