@@ -3,7 +3,7 @@ services:
     name: tamilmv-telegram-bot
     runtime: node
     plan: free
-    buildCommand: bash render-build.sh
+    buildCommand: npm install
     startCommand: node src/index.js
     envVars:
       - key: TELEGRAM_BOT_TOKEN
@@ -26,7 +26,3 @@ services:
         value: ./data/seen_films.json
       - key: MAX_TRACKED_FILMS
         value: 500
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: true
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: /usr/bin/chromium-browser

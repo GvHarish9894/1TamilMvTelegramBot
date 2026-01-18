@@ -39,12 +39,6 @@ class BrowserManager {
         ]
       };
 
-      // Use system Chromium if available (for Render.com and other platforms)
-      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        launchConfig.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-        logger.info(`Using Chromium at: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
-      }
-
       this.browser = await puppeteer.launch(launchConfig);
 
       this.isInitialized = true;
